@@ -423,7 +423,7 @@ namespace RealChute
         private void Update()
         {
             //Updating of size if possible
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return; }
+            if (!CompatibilityChecker.IsAllCompatible()) { return; }
             if ((!HighLogic.LoadedSceneIsEditor && !HighLogic.LoadedSceneIsFlight)) { return; }
             
             if (sizes.Count > 0 && this.part.transform.GetChild(0).localScale != Vector3.Scale(originalSize, sizes[size].size))
@@ -460,7 +460,7 @@ namespace RealChute
         private void OnGUI()
         {
             //Rendering manager
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT)) || !this.isTweakable || !this.part.Modules.Contains("RealChuteModule")) { return; }
+            if (!CompatibilityChecker.IsAllCompatible() || !this.isTweakable || !this.part.Modules.Contains("RealChuteModule")) { return; }
 
             editorGUI.RenderGUI();
         }

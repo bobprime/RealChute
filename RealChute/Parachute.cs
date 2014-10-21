@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -18,6 +19,12 @@ namespace RealChute
 {
     public class Parachute
     {
+        #region Fields
+        public static PlatformID platform = Environment.OSVersion.Platform;
+        public static PlatformID rocket = PlatformID.Win32NT;
+
+        #endregion
+
         #region Propreties
         //Predeployed area of the chute
         public float preDeployedArea

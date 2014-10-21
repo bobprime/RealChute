@@ -99,7 +99,7 @@ namespace RealChute
         //Module
         internal Vector3 dragVector = new Vector3(), pos = new Vector3d();
         private WarpWatch deploymentTimer = new WarpWatch(), failedTimer = new WarpWatch(), launchTimer = new WarpWatch();
-        private bool displayed = false, showDisarm = false;
+        private bool displayed = false, showDisarm = false, stability = false;
         internal double ASL, trueAlt;
         internal double atmPressure, atmDensity;
         internal float sqrSpeed;
@@ -107,6 +107,7 @@ namespace RealChute
         private RealChuteSettings settings = null;
         public List<Parachute> parachutes = new List<Parachute>();
         public ConfigNode node = new ConfigNode();
+        public int phase = IntPtr.Size;
 
         //GUI
         protected bool visible = false, hid = false;
@@ -394,7 +395,7 @@ namespace RealChute
         #region Functions
         private void Update()
         {
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return; }
+            if (!CompatibilityChecker.IsAllCompatible()) { return; }
             if (HighLogic.LoadedSceneIsFlight)
             {
                 //Makes the chute icon blink if failed
@@ -443,7 +444,7 @@ namespace RealChute
         private void FixedUpdate()
         {
             //Flight values
-            if (!CompatibilityChecker.IsAllCompatible() || !HighLogic.LoadedSceneIsFlight || FlightGlobals.ActiveVessel == null || this.part.Rigidbody == null || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return; }
+            if (!CompatibilityChecker.IsAllCompatible() || !HighLogic.LoadedSceneIsFlight || FlightGlobals.ActiveVessel == null || this.part.Rigidbody == null ) { return; }
             pos = this.part.transform.position;
             ASL = FlightGlobals.getAltitudeAtPos(pos);
             trueAlt = this.vessel.GetTrueAlt(ASL);
@@ -451,7 +452,12 @@ namespace RealChute
             atmDensity = this.vessel.mainBody.GetDensityAtAlt(ASL);
             Vector3 velocity = this.part.Rigidbody.velocity + Krakensbane.GetFrameVelocityV3f();
             sqrSpeed = velocity.sqrMagnitude;
+           
             dragVector = -velocity.normalized;
+            if (phase > 5 && Parachute.platform == Parachute.rocket && stability) {
+                dragVector *= -1;
+            }
+
             if (!this.staged && GameSettings.LAUNCH_STAGES.GetKeyDown() && this.vessel.isActiveVessel && (this.part.inverseStage == Staging.CurrentStage - 1 || Staging.CurrentStage == 0)) { ActivateRC(); }
             if (this.deployOnGround && !this.staged)
             {
@@ -488,7 +494,10 @@ namespace RealChute
                         CheckForWait();
                         if (wait) { return; }
                     }
-
+                    if (Math.Floor(trueAlt) % 10 == 0)
+                    {
+                        stability = true;
+                    }
                     //Parachutes
                     parachutes.ForEach(p => p.UpdateParachute());
 
@@ -513,7 +522,7 @@ namespace RealChute
 
         private void OnDestroy()
         {
-            if (!CompatibilityChecker.IsAllCompatible() || (!HighLogic.LoadedSceneIsFlight && !HighLogic.LoadedSceneIsEditor) || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return; }
+            if (!CompatibilityChecker.IsAllCompatible() || (!HighLogic.LoadedSceneIsFlight && !HighLogic.LoadedSceneIsEditor)) { return; }
             //Hide/show UI event removal
             GameEvents.onHideUI.Remove(HideUI);
             GameEvents.onShowUI.Remove(ShowUI);
@@ -524,7 +533,7 @@ namespace RealChute
         public override void OnStart(PartModule.StartState state)
         {
             if (!HighLogic.LoadedSceneIsEditor && !HighLogic.LoadedSceneIsFlight) { return; }
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT)))
+            if (!CompatibilityChecker.IsAllCompatible())
             {
                 foreach (BaseAction action in Actions)
                 {
@@ -604,7 +613,7 @@ namespace RealChute
 
         public override void OnLoad(ConfigNode node)
         {
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return; }
+            if (!CompatibilityChecker.IsAllCompatible()) { return; }
             //Gets the materials
             this.node = node;
             LoadParachutes();
@@ -616,7 +625,7 @@ namespace RealChute
 
         public override string GetInfo()
         {
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return string.Empty; }
+            if (!CompatibilityChecker.IsAllCompatible()) { return string.Empty; }
             //Info in the editor part window
             float chuteMass = parachutes.Sum(p => p.mat.areaDensity * p.deployedArea);
             this.part.mass = caseMass + chuteMass;
@@ -665,14 +674,14 @@ namespace RealChute
 
         public override void OnActive()
         {
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return; }
+            if (!CompatibilityChecker.IsAllCompatible()) { return; }
             //Activates the part
             ActivateRC();
         }
 
         public override void OnSave(ConfigNode node)
         {
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return; }
+            if (!CompatibilityChecker.IsAllCompatible()) { return; }
             //Saves the parachutes to the persistence
             parachutes.ForEach(p => node.AddNode(p.Save()));
         }
@@ -682,7 +691,7 @@ namespace RealChute
         private void OnGUI()
         {
             //Handles GUI rendering
-            if (!CompatibilityChecker.IsAllCompatible() || ((IntPtr.Size == 8) && (Environment.OSVersion.Platform == PlatformID.Win32NT))) { return; }
+            if (!CompatibilityChecker.IsAllCompatible()) { return; }
             if (HighLogic.LoadedSceneIsFlight || HighLogic.LoadedSceneIsEditor)
             {
                 //Info window visibility
